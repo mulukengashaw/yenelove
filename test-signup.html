@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Registration</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        input, button { display: block; margin: 10px 0; padding: 10px; width: 300px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Test User Registration</h1>
+    
+    <div>
+        <input type="email" id="email" placeholder="Email" value="test2@example.com">
+        <input type="password" id="password" placeholder="Password" value="password123">
+        <input type="text" id="name" placeholder="Name" value="Test User 2">
+        <input type="number" id="age" placeholder="Age" value="26">
+        <input type="text" id="location" placeholder="Location" value="Addis Ababa">
+        
+        <div>
+            <label>
+                <input type="radio" name="gender" value="male" checked> Male
+            </label>
+            <label>
+                <input type="radio" name="gender" value="female"> Female
+            </label>
+        </div>
+        
+        <button onclick="register()">Register via API</button>
+        <button onclick="registerDirect()">Register Direct to Supabase</button>
+    </div>
+    
+    <div id="result"></div>
+    
+    <script>
+        async function register() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Registering...';
+            
+            const userData = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                name: document.getElementById('name').value,
+                age: document.getElementById('age').value,
+                location: document.getElementById('location').value,
+                gender: document.querySelector('input[name="gender"]:checked').value
+            };
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="success">✅ Success! User created:</div>
+                                          <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Error (${response.status}):</div>
+                                          <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">🔥 Network Error:</div>${error.message}`;
+            }
+        }
+        
+        async function registerDirect() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Registering directly to Supabase...';
+            
+            // Direct Supabase registration (bypassing your backend)
+            const supabaseUrl = 'https://gmgxpgirgmmqsczvsbtv.supabase.co';
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtZ3hwZ2lyZ21tcXNjenZzYnR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA3NDg0MDAsImV4cCI6MjA0NjMyNDQwMH0.-U5t6p6QvV1EFpO0AvkR0cXQxgIuh4bYvlXzjmGmL3A';
+            
+            const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value;
+            
+            try {
+                // 1. Create auth user
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: { name }
+                    }
+                });
+                
+                if (authError) {
+                    resultDiv.innerHTML = `<div class="error">❌ Supabase Auth Error:</div>${authError.message}`;
+                    return;
+                }
+                
+                // 2. Create profile
+                const newUser = {
+                    id: authData.user?.id,
+                    email,
+                    name,
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
+                    gender: document.querySelector('input[name="gender"]:checked').value,
+                    age: parseInt(document.getElementById('age').value),
+                    location: document.getElementById('location').value,
+                    is_premium: false,
+                    status: 'online'
+                };
+                
+                const { data: userData, error: insertError } = await supabase
+                    .from('users')
+                    .insert([newUser])
+                    .select()
+                    .single();
+                
+                if (insertError) {
+                    resultDiv.innerHTML = `<div class="error">❌ Database Insert Error:</div>${insertError.message}`;
+                    return;
+                }
+                
+                resultDiv.innerHTML = `<div class="success">✅ Direct Registration Success!</div>
+                                      <pre>${JSON.stringify(userData, null, 2)}</pre>`;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">🔥 Direct Registration Error:</div>${error.message}`;
+            }
+        }
+        
+        // Load Supabase client
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/@supabase/supabase-js@2';
+        script.onload = () => {
+            console.log('Supabase loaded');
+        };
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>

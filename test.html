@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Supabase Connection</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Supabase Test</h1>
+    <button onclick="testConnection()">Test Connection</button>
+    <button onclick="listUsers()">List Users</button>
+    <div id="result"></div>
+    
+    <script>
+        const supabaseUrl = 'https://gmgxpgirgmmqsczvsbtv.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtZ3hwZ2lyZ21tcXNjenZzYnR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA3NDg0MDAsImV4cCI6MjA0NjMyNDQwMH0.-U5t6p6QvV1EFpO0AvkR0cXQxgIuh4bYvlXzjmGmL3A';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing connection...';
+            
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('count');
+                    
+                if (error) {
+                    resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                } else {
+                    resultDiv.innerHTML = `✅ Connected! Database accessible.`;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `🔥 Exception: ${err.message}`;
+            }
+        }
+        
+        async function listUsers() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Loading users...';
+            
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                    
+                if (error) {
+                    resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h3>Users in database (${data.length}):</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `🔥 Exception: ${err.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

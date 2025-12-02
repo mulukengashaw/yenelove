@@ -1,0 +1,8 @@
+{
+  "name": "Yene Love",
+  "description": "The premier Ethiopian dating and social app connecting Habeshas worldwide with video calls and AI matchmaking.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
